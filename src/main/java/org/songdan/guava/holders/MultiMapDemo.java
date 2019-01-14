@@ -74,10 +74,10 @@ public class MultiMapDemo {
 		like.setName("zhangsan");
 		like.setAge("25");
 
-		ImmutableListMultimap<String, Person> multimap = Multimaps.index(Lists.newArrayList(first, like), person -> {
-			return person.getName();
-		});
-		System.out.println(multimap.get("zhangsan"));
+//		ImmutableListMultimap<String, Person> multimap = Multimaps.index(Lists.newArrayList(first, like), person -> {
+//			return person.getName();
+//		});
+//		System.out.println(multimap.get("zhangsan"));
 	}
 
 	public static void main(String[] args) {
