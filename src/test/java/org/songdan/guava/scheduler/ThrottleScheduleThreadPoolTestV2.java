@@ -112,15 +112,32 @@ public class ThrottleScheduleThreadPoolTestV2 {
 
     @Test
     public void submitCost() {
-        ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(5);
-        executorService.prestartAllCoreThreads();
-        for (int i = 0; i < 5; i++) {
-            long start = System.currentTimeMillis();
-            executorService.submit(() -> {
-            });
-            print("commit [" + i+"]costs:"+(System.currentTimeMillis()-start));
+        for (int j = 0; j < 20; j++) {
+            ThreadPoolExecutor executorService = new ThreadPoolExecutor(5, 5, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+            executorService.prestartAllCoreThreads();
+            for (int i = 0; i < 5; i++) {
+                long start = System.currentTimeMillis();
+                executorService.submit(() -> {
+                });
+                print("commit ["+j+"][" + i + "]costs:" + (System.currentTimeMillis() - start));
+            }
+            executorService.shutdownNow();
         }
-        executorService.shutdownNow();
+    }
+
+    @Test
+    public void submitCostV2() {
+        for (int j = 0; j < 20; j++) {
+            ThreadPoolExecutor executorService = new ThreadPoolExecutor(5, 5, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+//        executorService.prestartAllCoreThreads();
+            for (int i = 0; i < 5; i++) {
+                long start = System.currentTimeMillis();
+                executorService.submit(() -> {
+                });
+                print("commit ["+j+"][" + i + "]costs:" + (System.currentTimeMillis() - start));
+            }
+            executorService.shutdownNow();
+        }
     }
 
     @Test
@@ -131,7 +148,7 @@ public class ThrottleScheduleThreadPoolTestV2 {
             long start = System.currentTimeMillis();
             executorService.submit(() -> {
             });
-            print("commit [" + i+"]costs:"+(System.currentTimeMillis()-start));
+            print("commit [" + i + "]costs:" + (System.currentTimeMillis() - start));
         }
         executorService.shutdownNow();
     }
