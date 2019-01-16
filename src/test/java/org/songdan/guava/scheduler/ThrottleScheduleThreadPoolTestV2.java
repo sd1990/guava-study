@@ -5,16 +5,13 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class ThrottleScheduleThreadPoolTestV2 {
 
     private int count = 0;
 
-    class Task implements IdentifyTask {
+    class Task implements ThrottleTask {
 
         private int taskId;
 
@@ -32,9 +29,13 @@ public class ThrottleScheduleThreadPoolTestV2 {
         public void run() {
             synchronized (ThrottleScheduleThreadPoolTestV2.this) {
                 count++;
-                System.out.println(LocalDateTime.now() +"-->task " + taskId + "[" + version + "]" + "delay: "+delay+" run !!!");
+                print("task " + taskId + "[" + version + "]" + "delay: " + delay + " run !!!");
             }
 
+        }
+
+        private void print(String content) {
+            System.out.println(Thread.currentThread() + "[" + LocalDateTime.now() + "]" + content);
         }
 
         @Override
@@ -61,50 +62,81 @@ public class ThrottleScheduleThreadPoolTestV2 {
         }
 
         @Override
-        public Integer identify() {
-            return taskId;
+        public String identify() {
+            return String.valueOf(taskId);
         }
     }
 
     @Test
     public void submit() throws ExecutionException, InterruptedException {
-        ThrottleScheduleThreadPoolV2 scheduleThreadPool = new ThrottleScheduleThreadPoolV2(1);
-        scheduleThreadPool.schedule(new Task(1, 1,50), 50, TimeUnit.MILLISECONDS);
-        Thread.sleep(39);
-        scheduleThreadPool.schedule(new Task(1, 2,50), 50, TimeUnit.MILLISECONDS);
+        ThrottleScheduleThreadPoolV2 scheduleThreadPool = new ThrottleScheduleThreadPoolV2(5);
+        scheduleThreadPool.prestartAllCoreThreads();
+        Task task1 = new Task(1, 1, 50);
+        scheduleThreadPool.schedule(task1, 50, TimeUnit.MILLISECONDS);
         Thread.sleep(10);
-        scheduleThreadPool.schedule(new Task(1, 3,50), 50, TimeUnit.MILLISECONDS);
+        Task task2 = new Task(1, 2, 50);
+        scheduleThreadPool.schedule(task2, 50, TimeUnit.MILLISECONDS);
         Thread.sleep(10);
-        scheduleThreadPool.schedule(new Task(1, 4,50), 50, TimeUnit.MILLISECONDS);
+        scheduleThreadPool.schedule(new Task(1, 3, 50), 50, TimeUnit.MILLISECONDS);
         Thread.sleep(10);
-        scheduleThreadPool.schedule(new Task(1, 5,50), 50, TimeUnit.MILLISECONDS);
-        Thread.sleep(1000);
+        scheduleThreadPool.schedule(new Task(1, 4, 50), 50, TimeUnit.MILLISECONDS);
+        Thread.sleep(10);
+        scheduleThreadPool.schedule(new Task(1, 5, 50), 50, TimeUnit.MILLISECONDS);
         scheduleThreadPool.shutdown();
-        while (!scheduleThreadPool.isTerminated()) {
-        }
+        Thread.sleep(1000);
+        /*while (!scheduleThreadPool.isTerminated()) {
+        }*/
     }
 
     @Test
     public void submitConcurrent() throws ExecutionException, InterruptedException {
-        for (int j = 0; j < 10; j++) {
-            ThrottleScheduleThreadPoolV2 scheduleThreadPool = new ThrottleScheduleThreadPoolV2(2);
-            ExecutorService executorService = Executors.newCachedThreadPool();
-            for (int i = 0; i < 100; i++) {
-                int finalI = i;
-                executorService.submit(() -> {
+        ThrottleScheduleThreadPoolV2 scheduleThreadPool = new ThrottleScheduleThreadPoolV2(2);
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        for (int i = 0; i < 600; i++) {
+            int finalI = i;
+            executorService.submit(() -> {
 //                int delay = ThreadLocalRandom.current().nextInt(10, 50);
-                    int delay = 50;
-                    scheduleThreadPool.schedule(new Task(1, finalI,delay), delay, TimeUnit.MILLISECONDS);
-                });
+                int delay = 50;
+                scheduleThreadPool.schedule(new Task(1, finalI, delay), delay, TimeUnit.MILLISECONDS);
+            });
 //            Thread.sleep(ThreadLocalRandom.current().nextInt(0, 5));
-            }
-            Thread.sleep(1000);
-            scheduleThreadPool.shutdown();
-            executorService.shutdown();
-            Assert.assertEquals(1,count);
-            count = 0;
-            while (!scheduleThreadPool.isTerminated()) {
-            }
         }
+        Thread.sleep(1000);
+        scheduleThreadPool.shutdown();
+        executorService.shutdown();
+        Assert.assertEquals(1, count);
+        while (!scheduleThreadPool.isTerminated()) {
+            System.out.println();
+        }
+    }
+
+    @Test
+    public void submitCost() {
+        ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(5);
+        executorService.prestartAllCoreThreads();
+        for (int i = 0; i < 5; i++) {
+            long start = System.currentTimeMillis();
+            executorService.submit(() -> {
+            });
+            print("commit [" + i+"]costs:"+(System.currentTimeMillis()-start));
+        }
+        executorService.shutdownNow();
+    }
+
+    @Test
+    public void submitCostSchedule() {
+        ScheduledThreadPoolExecutor executorService = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(5);
+        executorService.prestartAllCoreThreads();
+        for (int i = 0; i < 5; i++) {
+            long start = System.currentTimeMillis();
+            executorService.submit(() -> {
+            });
+            print("commit [" + i+"]costs:"+(System.currentTimeMillis()-start));
+        }
+        executorService.shutdownNow();
+    }
+
+    private void print(String content) {
+        System.out.println(Thread.currentThread() + "[" + LocalDateTime.now() + "]" + content);
     }
 }
