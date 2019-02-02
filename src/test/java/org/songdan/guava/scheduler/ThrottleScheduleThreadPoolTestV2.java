@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.*;
 
@@ -84,8 +85,8 @@ public class ThrottleScheduleThreadPoolTestV2 {
         scheduleThreadPool.schedule(new Task(1, 5, 50), 50, TimeUnit.MILLISECONDS);
         scheduleThreadPool.shutdown();
         Thread.sleep(1000);
-        /*while (!scheduleThreadPool.isTerminated()) {
-        }*/
+        while (!scheduleThreadPool.isTerminated()) {
+        }
     }
 
     @Test
@@ -112,14 +113,51 @@ public class ThrottleScheduleThreadPoolTestV2 {
 
     @Test
     public void submitCost() {
+        long start = System.currentTimeMillis();
+        print("hello world");
+        System.out.println(System.currentTimeMillis()-start);
+//        print("commit ["+9999+"][" + 199999 + "]costs:" + (System.currentTimeMillis() - start));
         for (int j = 0; j < 20; j++) {
             ThreadPoolExecutor executorService = new ThreadPoolExecutor(5, 5, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
             executorService.prestartAllCoreThreads();
             for (int i = 0; i < 5; i++) {
-                long start = System.currentTimeMillis();
+                start = System.currentTimeMillis();
                 executorService.submit(() -> {
                 });
+                print((System.currentTimeMillis() - start));
+            }
+            executorService.shutdownNow();
+        }
+    }
+
+    @Test
+    public void submitCostV3() {
+        long start = System.currentTimeMillis();
+        /*for (int j = 0; j < 20; j++) {
+            ThreadPoolExecutor executorService = new ThreadPoolExecutor(5, 5, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+            executorService.prestartAllCoreThreads();
+            for (int i = 0; i < 5; i++) {
+                start = System.currentTimeMillis();
+                print("commit fuck costs:" + (System.currentTimeMillis() - start));
+                executorService.submit(() -> {
+
+                });
                 print("commit ["+j+"][" + i + "]costs:" + (System.currentTimeMillis() - start));
+            }
+            executorService.shutdownNow();
+        }*/
+        for (int j = 0; j < 20; j++) {
+            ThreadPoolExecutor executorService = new ThreadPoolExecutor(5, 5, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<>(16));
+            executorService.prestartAllCoreThreads();
+            for (int i = 0; i < 5; i++) {
+                start = System.currentTimeMillis();
+//                print(System.currentTimeMillis() - start);
+//                print("commit fuck costs:" + (System.currentTimeMillis() - start));
+                executorService.submit(() -> {
+
+                });
+//                print("commit ["+j+"][" + i + "]costs:" + (System.currentTimeMillis() - start));
+                print((System.currentTimeMillis() - start));
             }
             executorService.shutdownNow();
         }
@@ -153,7 +191,21 @@ public class ThrottleScheduleThreadPoolTestV2 {
         executorService.shutdownNow();
     }
 
-    private void print(String content) {
-        System.out.println(Thread.currentThread() + "[" + LocalDateTime.now() + "]" + content);
+    private void print(Object content) {
+//        System.out.println(Thread.currentThread() + "[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + new Date() + "]" + content);
+//        System.out.println(Thread.currentThread() + content);
+        System.out.println(content);
+    }
+
+    private void print(long content) {
+//        System.out.println(Thread.currentThread() + "[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + LocalDateTime.now() + "]" + content);
+//        System.out.println("[" + LocalDateTime.now() + "]" + content);
+//        System.out.println(Thread.currentThread() + content);
+        System.out.println(content);
     }
 }
